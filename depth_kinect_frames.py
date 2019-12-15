@@ -18,6 +18,18 @@ import matplotlib.pyplot as plt
 threshold = 250
 current_depth = 630
 
+"""
+def colorbar(mappable):
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    import matplotlib.pyplot as plt
+    last_axes = plt.gca()
+    ax = mappable.axes
+    fig = ax.figure
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="10%", pad=0.05)
+    cbar = fig.colorbar(mappable, cax=cax)
+    plt.sca(last_axes)
+    return cbar"""
 
 #function to get RGB image from kinect
 #def get_video():
@@ -91,9 +103,9 @@ if __name__ == "__main__":
         
         #display RGB image
 	    #       cv2.imshow('RGB image',frame)
-        imgplot = plt.imshow(depth_thr,cmap='gray',interpolation='none')
-        plt.colorbar()
-        plt.show()
+#        imgplot = plt.imshow(depth_thr,cmap='gray',interpolation='none')
+#        plt.colorbar()
+#        plt.show()
         
         
 #       ---------- RECORTANDO IMAGEN --------------------------
@@ -132,27 +144,26 @@ if __name__ == "__main__":
             print("Avanzar en linea recta")    
         if(len(ones_izq)!=0 and len(ones_cen)!=0 and len(ones_der)!=0):
             print("Giro 180°") 
-
-        fig, axs = plt.subplots(Nr, Nc)
-        fig.suptitle('Multiple images')
+"""
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3,sharey=True)
+        ax1.set_title('Frame Izquierdo')
+        ax1.grid(True)
+        img1=ax1.imshow(crop_img_izq,cmap='gray',interpolation='none')
+        colorbar(img1)
         
-        images = []
-        for i in range(Nr):
-            for j in range(Nc):
-                # Generate data with a range that varies from one plot to the next.
-                data = ((1 + i + j) / 10) * np.random.rand(10, 20) * 1e-6
-                images.append(axs[i, j].imshow(data, cmap=cmap))
-                axs[i, j].label_outer()
+        ax2.set_title('Frame Central')
+        ax2.grid(True)
+        img2=ax2.imshow(crop_img_cen,cmap='gray',interpolation='none')
+        colorbar(img2)
+        ax3.set_title('Frame Derecho')
+        ax3.grid(True)
         
-        # Find the min and max of all colors for use in setting the color scale.
-        vmin = min(image.get_array().min() for image in images)
-        vmax = max(image.get_array().max() for image in images)
-        norm = colors.Normalize(vmin=vmin, vmax=vmax)
-        for im in images:
-            im.set_norm(norm)
+        img3=ax3.imshow(crop_img_der,cmap='gray',interpolation='none')
+        colorbar(img3)   
         
-        fig.colorbar(images[0], ax=axs, orientation='horizontal', fraction=.1)
-
+        plt.show()
+        """
+                
         #for i in range(480):
           #  for j in range(213):
 #                if crop_img_cen[i][j]!=0:                        
