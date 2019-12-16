@@ -10,10 +10,10 @@ Created on Mon Dec  9 21:41:51 2019
 import freenect
 import cv2
 import numpy as np
-import time
+from linetimer import CodeTimer
 
 import frame_convert2
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
  
 threshold = 250
 current_depth = 630
@@ -46,7 +46,7 @@ def get_raw_depth():
     array = array.astype(np.uint16)
     return array
 
-"""function to get raw depth image from kinect"""
+"""function to get depth image from kinect"""
 def get_depth():
     array,_ = freenect.sync_get_depth()
     array = array.astype(np.uint8)
@@ -79,14 +79,20 @@ if __name__ == "__main__":
         
         #-----------get a frame from depth sensor        
 #        depth = get_depth()
-        raw_depth = get_raw_depth()
+        with CodeTimer('raw_depth'):
+            raw_depth = get_raw_depth()        
+            pass
         """-------------------- APPLY FILTER ---------------------"""
-        #erosion=cv2.erode(depth,kernel,iterations=3)
-        #erosion=cv2.morphologyEx(depth,cv2.MORPH_OPEN,kernel,iterations=4)
+        with CodeTimer('Filter'):
+            #erosion=cv2.erode(raw_depth,kernel,iterations=3)
+            erosion=cv2.morphologyEx(raw_depth,cv2.MORPH_OPEN,kernel,iterations=4)
+            pass
         """-------------------- SEGMENTACION ---------------------"""
-        depth_thr = 255 * np.logical_and(raw_depth >= current_depth - threshold,
-                                         raw_depth <= current_depth + threshold)
-        depth_thr = depth_thr.astype(np.uint8)
+        with CodeTimer('Segmentacion'):
+            depth_thr = 255 * np.logical_and(raw_depth >= current_depth - threshold,
+                                             raw_depth <= current_depth + threshold)
+            depth_thr = depth_thr.astype(np.uint8)
+            pass
 	    #	Median filter	
         #medianblur= cv2.medianBlur(depth,27)
         
@@ -110,41 +116,41 @@ if __name__ == "__main__":
         
 #       ---------- RECORTANDO IMAGEN --------------------------
         # NOTE: its img[y: y + h, x: x + w] 
-        crop_img_izq =  depth_thr[0:480, 0:213]          
-        cv2.imshow(winizq,crop_img_izq)        
-        #imgplot = plt.imshow(crop_img_izq)
-        #plt.colorbar()
-        #plt.show()
+        with CodeTimer('Mostrar frames'):
+            crop_img_izq =  depth_thr[0:480, 0:213]          
+            cv2.imshow(winizq,crop_img_izq)        
+            
+            crop_img_cen =  depth_thr[0:480, 213:426]
+            cv2.imshow(wincen,crop_img_cen)        
+            
+            crop_img_der =  depth_thr[0:480, 426:640]
+            cv2.imshow(winder,crop_img_der)
+            pass
         
-        crop_img_cen =  depth_thr[0:480, 213:426]
-        cv2.imshow(wincen,crop_img_cen)
-        
-        
-        crop_img_der =  depth_thr[0:480, 426:640]
-        cv2.imshow(winder,crop_img_der)
-    
         """ LECTURA DE FRAMES """
-        ones_izq=np.transpose(np.nonzero(crop_img_izq))
-        ones_cen=np.transpose(np.nonzero(crop_img_cen))
-        ones_der=np.transpose(np.nonzero(crop_img_der))
-        
-
-        if(len(ones_izq)!=0):
-            print("Avanzar en linea recta")
-        if(len(ones_cen)!=0):
-            print("Girar derecha")
-        if(len(ones_der)!=0):
-            print("Avanzar en linea recta")
-  
-        if(len(ones_cen)!=0 and len(ones_der)!=0):
-            print("Girar izquierda")
-        if(len(ones_cen)!=0 and len(ones_izq)!=0):
-            print("Girar derecha")
-        if(len(ones_izq)!=0 and len(ones_der)!=0):
-            print("Avanzar en linea recta")    
-        if(len(ones_izq)!=0 and len(ones_cen)!=0 and len(ones_der)!=0):
-            print("Giro 180°") 
-"""
+        with CodeTimer('Tomar camino'):
+            ones_izq=np.transpose(np.nonzero(crop_img_izq))
+            ones_cen=np.transpose(np.nonzero(crop_img_cen))
+            ones_der=np.transpose(np.nonzero(crop_img_der))
+            
+    
+            if(len(ones_izq)!=0):
+                print("Avanzar en linea recta")
+            if(len(ones_cen)!=0):
+                print("Girar derecha")
+            if(len(ones_der)!=0):
+                print("Avanzar en linea recta")
+      
+            if(len(ones_cen)!=0 and len(ones_der)!=0):
+                print("Girar izquierda")
+            if(len(ones_cen)!=0 and len(ones_izq)!=0):
+                print("Girar derecha")
+            if(len(ones_izq)!=0 and len(ones_der)!=0):
+                print("Avanzar en linea recta")    
+            if(len(ones_izq)!=0 and len(ones_cen)!=0 and len(ones_der)!=0):
+                print("Giro 180°") 
+                pass
+        """
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3,sharey=True)
         ax1.set_title('Frame Izquierdo')
         ax1.grid(True)
@@ -162,35 +168,11 @@ if __name__ == "__main__":
         colorbar(img3)   
         
         plt.show()
-        """
-                
-        #for i in range(480):
-          #  for j in range(213):
-#                if crop_img_cen[i][j]!=0:                        
-##                    cv2.putText(img, 'OpenCV Python', (5,260), font, 3, (255,255,255), 1, cv2.LINE_AA)
-##                    cv2.imshow("COMANDO", img)
-#                    print("Girar derecha")
-#                    
-#                if crop_img_der[i][j]!=0:                        
-##                    cv2.putText(img, 'OpenCV Python', (5,260), font, 3, (255,255,255), 1, cv2.LINE_AA)
-##                    cv2.imshow("COMANDO", img)
-#                    print("avanzar recto")
-#                    
-#                if crop_img_izq[i][j]!=0:                        
-##                    cv2.putText(img, 'OpenCV Python', (5,260), font, 3, (255,255,255), 1, cv2.LINE_AA)
-##                    cv2.imshow("COMANDO", img)
-#                    print("avanzar recto")
-#                if crop_img_der[i][j]!=0 and crop_img_izq[i][j]!=0 and crop_img_cen[i][j]!=0:
-#                    print("Giro 180°")      
-           #     if crop_img_izq[i][j]!=0 and crop_img_cen[i][j]!=0:
-            #        print("girar derecha")
-             #   if crop_img_der[i][j]!=0 and crop_img_cen[i][j]!=0:
-              #      print("girar izquierda")
-               # if crop_img_der[i][j]!=0 and crop_img_izq[i][j]!=0:
-                #    print("Avanzar recto")  
-                
-                    
-        show_video()
+        """ 
+        with CodeTimer('Mostrar video RGB'):
+            show_video()
+            pass
+        
         
 #       --------- CALCULANDO PROFUNDIDAD PROMEDIO ----------
 #        depthmm = raw_depth[1,1];
