@@ -36,7 +36,53 @@ def rawDepthToMeters(depthValue):
         return (1.0 / ((depthValue) * -0.0030711016 + 3.3309495161))
     return 0
  
+"""    
+/ Only needed to make sense of the ouput depth values from the kinect
+PVector depthToWorld(int x, int y, int depthValue) {
+
+  final double fx_d = 1.0 / 5.9421434211923247e+02;
+  final double fy_d = 1.0 / 5.9104053696870778e+02;
+  final double cx_d = 3.3930780975300314e+02;
+  final double cy_d = 2.4273913761751615e+02;
+
+// Drawing the result vector to give each point its three-dimensional space
+  PVector result = new PVector();
+  double depth =  depthLookUp[depthValue];//rawDepthToMeters(depthValue);
+  result.x = (float)((x - cx_d) * depth * fx_d);
+  result.y = (float)((y - cy_d) * depth * fy_d);
+  result.z = (float)(depth);
+  return result;
+}
+"""
+#     We'll use a lookup table so that we don't have to repeat the math over and over
+depthLookUp= np.zeros(2048);
+
+
+#   Lookup table for all possible depth values (0 - 2047)
+for i in range(len(depthLookUp)):
+    depthLookUp[i] = rawDepthToMeters(i);
+
+
+def depthToWorld( x, y, depthValue):
+    fx_d = 1.0 / 5.9421434211923247e+02;
+    fy_d = 1.0 / 5.9104053696870778e+02;
+    cx_d = 3.3930780975300314e+02;
+    cy_d = 2.4273913761751615e+02;
+    
+#    Drawing the result vector to give each point its three-dimensional space           
+    
+    depth = depthLookUp[depthValue]; #rawDepthToMeters(depthValue);
+    result=float((x - cx_d) * depth * fx_d);
+    result1=np.append(result,float((y - cy_d) * depth * fy_d));
+    result2=np.append(result1,float(depth));       
+    return result2;
+    
+    
+
+
+
 if __name__ == "__main__":
+    
     kernel = np.ones((5,5),np.uint8)
     vector = [];
     dis=[];
@@ -64,7 +110,7 @@ if __name__ == "__main__":
 #        erosion=cv2.morphologyEx(depth,cv2.MORPH_OPEN,kernel,iterations=4)
         raw_erosion=cv2.morphologyEx(raw_depth,cv2.MORPH_OPEN,kernel,iterations=4)
         """-------------------- CIRCLES ---------------------"""
-        img_c = cv2.circle(frame,(320,240),3,(0,0,255),-1);        
+        img_c = cv2.circle(frame,(320,240),3,(0,255,0),-1);        
         img_c1 = cv2.circle(img_c,(335,240),3,(0,0,255),-1);
         img_c2 = cv2.circle(img_c1,(350,240),3,(0,0,255),-1);
         img_c3 = cv2.circle(img_c2,(365,240),3,(0,0,255),-1);
@@ -105,7 +151,7 @@ if __name__ == "__main__":
         img_c37 = cv2.circle(img_c36,(65,240),3,(0,0,255),-1);
         img_c38 = cv2.circle(img_c37,(50,240),3,(0,0,255),-1);
         img_c39 = cv2.circle(img_c38,(35,240),3,(0,0,255),-1);
-        img_c40 = cv2.circle(img_c39,(20,240),3,(0,0,255),-1);
+        img_c40 = cv2.circle(img_c39,(20,240),3,(255,0,0),-1);
 #        
 
 #        
@@ -130,20 +176,29 @@ if __name__ == "__main__":
         tetha=math.atan(float(s2));
         tetha1=math.degrees(float(tetha));
         tetha2=float(tetha1)*100;
-        print(tetha2);
+#        print(tetha2);
 #        print(s);
         """-------------------- DISTANCIA ---------------------"""
 #        print("Máximo: "+str(maximo)+" pos: "+str(vector.index(max(vector)))+"------ Mínimo: "+str(minimo)+" pos: "+str(vector.index(minimo)));
+#        
+#        for i in range(len(vector)): # IMPRIMIENDO VECTOR DISTANCIAS 
+#            distance= rawDepthToMeters(float(vector[i]));
+#            dis.append(distance);
+#        
+#        plt.plot(dis);
+#        plt.show();       
         
-        for i in range(len(vector)):
-            distance= rawDepthToMeters(float(vector[i]));
-            dis.append(distance);
+#        z1= raw_depth[240,320]
+#        z2= raw_depth[240,20]
+        """--------------------MEDIR ZONA---------------------"""
+        p1 = depthToWorld(320,240,raw_erosion[240,320]);
+        p2 = depthToWorld(20,240,raw_erosion[240,20]);
+    
+        result = np.subtract(p1,p2);
+        norma= np.linalg.norm(result);
+        print(norma+0.1);
         
-        plt.plot(dis);
-        plt.show();
         
-        
-               
         
         
         #display RGB image
