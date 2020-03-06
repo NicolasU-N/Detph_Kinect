@@ -35,28 +35,9 @@ def rawDepthToMeters(depthValue):
     if(depthValue < 2047):
         return (1.0 / ((depthValue) * -0.0030711016 + 3.3309495161))
     return 0
- 
-"""    
-/ Only needed to make sense of the ouput depth values from the kinect
-PVector depthToWorld(int x, int y, int depthValue) {
 
-  final double fx_d = 1.0 / 5.9421434211923247e+02;
-  final double fy_d = 1.0 / 5.9104053696870778e+02;
-  final double cx_d = 3.3930780975300314e+02;
-  final double cy_d = 2.4273913761751615e+02;
-
-// Drawing the result vector to give each point its three-dimensional space
-  PVector result = new PVector();
-  double depth =  depthLookUp[depthValue];//rawDepthToMeters(depthValue);
-  result.x = (float)((x - cx_d) * depth * fx_d);
-  result.y = (float)((y - cy_d) * depth * fy_d);
-  result.z = (float)(depth);
-  return result;
-}
-"""
 #     We'll use a lookup table so that we don't have to repeat the math over and over
 depthLookUp= np.zeros(2048);
-
 
 #   Lookup table for all possible depth values (0 - 2047)
 for i in range(len(depthLookUp)):
@@ -67,25 +48,28 @@ def depthToWorld( x, y, depthValue):
     fx_d = 1.0 / 5.9421434211923247e+02;
     fy_d = 1.0 / 5.9104053696870778e+02;
     cx_d = 3.3930780975300314e+02;
-    cy_d = 2.4273913761751615e+02;
-    
-#    Drawing the result vector to give each point its three-dimensional space           
-    
+    cy_d = 2.4273913761751615e+02;    
+#    Drawing the result vector to give each point its three-dimensional space               
     depth = depthLookUp[depthValue]; #rawDepthToMeters(depthValue);
     result=float((x - cx_d) * depth * fx_d);
     result1=np.append(result,float((y - cy_d) * depth * fy_d));
     result2=np.append(result1,float(depth));       
     return result2;
     
+def close_event():
+    plt.close() #timer calls this function after 3 seconds and closes the window 
     
-
-
-
 if __name__ == "__main__":
     
     kernel = np.ones((5,5),np.uint8)
     vector = [];
     dis=[];
+    distancias_maximas=[];
+    coor_x_fordis=[];
+    
+    for i in range(20,621,15):
+        coor_x_fordis.append(i);
+        
 #           ---------------------IZQUIERDA------------------------------------------------------------CENTRO----------------------------------------DERECHA
     coor=[-305,-290,-275,-260,-245,-230,-215,-200,-185,-170,-155,-140,-125,-110,-95,-80,-65,-50,-35,-20,0,20,35,50,65,80,95,110,125,140,155,170,185,200,215,230,245,260,275,290,305];
     
@@ -94,7 +78,6 @@ if __name__ == "__main__":
 #    
 #    for i in range(20,621,15):
 #        coor_depth.append(i);
-        
     
     while 1:
         #get a frame from RGB camera
@@ -166,9 +149,7 @@ if __name__ == "__main__":
         index_max=vector.index(max(vector));
         
         coordinate_x = coor[index_max];
-        
-        
-        
+                
         """-------------------- ANGULO DE GIRO ---------------------"""
 #        tetha=np.arctan(coordinate_x/(max(vector)));
         s=float(coordinate_x)/float(maximo);        
@@ -181,24 +162,59 @@ if __name__ == "__main__":
         """-------------------- DISTANCIA ---------------------"""
 #        print("Máximo: "+str(maximo)+" pos: "+str(vector.index(max(vector)))+"------ Mínimo: "+str(minimo)+" pos: "+str(vector.index(minimo)));
 #        
-#        for i in range(len(vector)): # IMPRIMIENDO VECTOR DISTANCIAS 
-#            distance= rawDepthToMeters(float(vector[i]));
-#            dis.append(distance);
-#        
-#        plt.plot(dis);
-#        plt.show();       
+        for i in range(len(vector)): # IMPRIMIENDO VECTOR DISTANCIAS 
+            distance= rawDepthToMeters(float(vector[i]));
+            dis.append(distance);
+        
+        maxi_dis=max(dis);
+        
+        index_max_dis=dis.index(max(dis));
+        
+        coor_x_dis=coor_x_fordis[index_max_dis];
+        
+
+        """ PRINT GAUSS """    
+        fig = plt.figure()
+        timer = fig.canvas.new_timer(interval = 500) #creating a timer object and setting an interval of 3000 milliseconds
+        timer.add_callback(close_event)
+        
+        plt.plot(dis)
+        plt.grid(True);
+        plt.ylabel('Metros')
+        
+        timer.start()
+        plt.show()
+        
+        
+#        print ("Am doing something else"   );
+        for i in range(len(dis)): # EVALUANDO VECTOR DISTANCIAS obtener las cercanas con razon del 10%
+            measure=dis[i];
+            var1=maxi_dis-(maxi_dis*0.10);
+            if(measure>=var1 and measure<=maxi_dis):
+                distancias_maximas.append(measure);
+
+
+
+
+        
+        
         
 #        z1= raw_depth[240,320]
 #        z2= raw_depth[240,20]
-        """--------------------MEDIR ZONA---------------------"""
+        """--------------------OBTENER MEDIDAS cm---------------------"""
+#        EN ESTE PUNTO SE DEBE OBTENER LAS COORDENADAS DE LOS PUNTOS CERCANOS
+#        A LA DISTANCIA MÁS LEJANA
+        
+#        depthToWorld( x , y , raw_depth[])
         p1 = depthToWorld(320,240,raw_erosion[240,320]);
         p2 = depthToWorld(20,240,raw_erosion[240,20]);
     
         result = np.subtract(p1,p2);
         norma= np.linalg.norm(result);
-        print(norma+0.1);
+#        print(norma+0.1);
+        """------------------- OBTENER COORDENADAS P1 P2-------------"""
         
-        
+        print(distancias_maximas); 
         
         
         #display RGB image
@@ -211,6 +227,8 @@ if __name__ == "__main__":
         dis=[];
         maximo=0;
         minimo=0;
+        maxi_dis=0;
+        distancias_maximas=[];
         
         # quit program when 'esc' key is pressed
         k = cv2.waitKey(5) & 0xFF
