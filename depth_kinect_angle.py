@@ -25,11 +25,20 @@ def get_raw_depth():
     array = array.astype(np.uint16)
     return array
  
-#function to get depth image from kinect
-def get_depth():
-    array,_ = freenect.sync_get_depth()
-    array = array.astype(np.uint8)
-    return array
+#function to get depth image from kinect + threshold
+def show_depth():
+    threshold =056;
+    current_depth = 1012;
+
+    depth, timestamp = freenect.sync_get_depth()
+    depth = 255 * np.logical_and(depth >= current_depth - threshold,
+                                 depth <= current_depth + threshold)
+    depth = depth.astype(np.uint8) 
+    return depth
+    
+
+
+"""----------------- CONVERSION A UNIDADES MÉTRICAS-----------------"""
 
 def rawDepthToMeters(depthValue):
     if(depthValue < 2047):
@@ -64,8 +73,10 @@ if __name__ == "__main__":
     kernel = np.ones((5,5),np.uint8)
     vector = [];
     dis=[];
-    distancias_maximas=[];
+    
+    
     coor_x_fordis=[];
+    arr_bw=[];
     
     for i in range(20,621,15):
         coor_x_fordis.append(i);
@@ -73,27 +84,22 @@ if __name__ == "__main__":
 #           ---------------------IZQUIERDA------------------------------------------------------------CENTRO----------------------------------------DERECHA
     coor=[-305,-290,-275,-260,-245,-230,-215,-200,-185,-170,-155,-140,-125,-110,-95,-80,-65,-50,-35,-20,0,20,35,50,65,80,95,110,125,140,155,170,185,200,215,230,245,260,275,290,305];
     
-#           COORDENADAS PLANO PROFUNDIDAD    
-#    coor_depth= [];
-#    
-#    for i in range(20,621,15):
-#        coor_depth.append(i);
-    
+   
     while 1:
         #get a frame from RGB camera
         frame = get_video()
         
         #get a frame from depth sensor
-       # depth = get_depth()
         raw_depth = get_raw_depth()
-        
-        #get a frame from depth sensor
-        #depth = get_depth()
-        """-------------------- APPLY FILTER ---------------------"""
+        thresholding=show_depth();
+
+        """-------------------- FILTRO DE EROSIÓN ---------------------"""
 #        erosion=cv2.morphologyEx(depth,cv2.MORPH_OPEN,kernel,iterations=4)
         raw_erosion=cv2.morphologyEx(raw_depth,cv2.MORPH_OPEN,kernel,iterations=4)
+        erosion_threshold=cv2.morphologyEx(thresholding,cv2.MORPH_OPEN,kernel,iterations=2)        
+        
         """-------------------- CIRCLES ---------------------"""
-        img_c = cv2.circle(frame,(320,240),3,(0,255,0),-1);        
+        img_c = cv2.circle(frame,(320,240),3,(0,100,255),-1);        
         img_c1 = cv2.circle(img_c,(335,240),3,(0,0,255),-1);
         img_c2 = cv2.circle(img_c1,(350,240),3,(0,0,255),-1);
         img_c3 = cv2.circle(img_c2,(365,240),3,(0,0,255),-1);
@@ -134,18 +140,18 @@ if __name__ == "__main__":
         img_c37 = cv2.circle(img_c36,(65,240),3,(0,0,255),-1);
         img_c38 = cv2.circle(img_c37,(50,240),3,(0,0,255),-1);
         img_c39 = cv2.circle(img_c38,(35,240),3,(0,0,255),-1);
-        img_c40 = cv2.circle(img_c39,(20,240),3,(255,0,0),-1);
+        img_c40 = cv2.circle(img_c39,(20,240),3,(0,0,255),-1);
 #        
 
 #        
-        """-------------------- VECTOR ---------------------"""
+        """-------------------- VECTOR PRFUNDIDAD ---------------------"""
         
         for i in range(20,621,15):
             profundidad=raw_erosion[240,i];
             vector.append(profundidad);            
             
         maximo =max(vector);
-#        minimo =min(vector);
+
         index_max=vector.index(max(vector));
         
         coordinate_x = coor[index_max];
@@ -157,6 +163,10 @@ if __name__ == "__main__":
         tetha=math.atan(float(s2));
         tetha1=math.degrees(float(tetha));
         tetha2=float(tetha1)*100;
+        
+        if tetha2==-14.8998198566:
+            tetha2=0;
+        
 #        print(tetha2);
 #        print(s);
         """-------------------- DISTANCIA ---------------------"""
@@ -166,69 +176,65 @@ if __name__ == "__main__":
             distance= rawDepthToMeters(float(vector[i]));
             dis.append(distance);
         
-        maxi_dis=max(dis);
+        #OBTENER PUNTOS EN 255 0
         
-        index_max_dis=dis.index(max(dis));
+        for i in range(20,621,15):
+            black_white=thresholding[240,i];
+            
+            if black_white==255:
+                arr_bw.append(i);
         
-        coor_x_dis=coor_x_fordis[index_max_dis];
-        
-
-        """ PRINT GAUSS """    
-        fig = plt.figure()
-        timer = fig.canvas.new_timer(interval = 500) #creating a timer object and setting an interval of 3000 milliseconds
-        timer.add_callback(close_event)
-        
-        plt.plot(dis)
-        plt.grid(True);
-        plt.ylabel('Metros')
-        
-        timer.start()
-        plt.show()
-        
-        
-#        print ("Am doing something else"   );
-        for i in range(len(dis)): # EVALUANDO VECTOR DISTANCIAS obtener las cercanas con razon del 10%
-            measure=dis[i];
-            var1=maxi_dis-(maxi_dis*0.10);
-            if(measure>=var1 and measure<=maxi_dis):
-                distancias_maximas.append(measure);
-
-
-
-
+        """ PRINT GRAFICA DISTANCIAS """    
+#        fig = plt.figure()
+#        timer = fig.canvas.new_timer(interval = 500) #creating a timer object and setting an interval of 3000 milliseconds
+#        timer.add_callback(close_event)
+#        
+#        plt.plot(dis)
+#        plt.grid(True);
+#        plt.ylabel('Metros')
+#        
+#        timer.start()
+#        plt.show()
         
         
         
-#        z1= raw_depth[240,320]
-#        z2= raw_depth[240,20]
         """--------------------OBTENER MEDIDAS cm---------------------"""
 #        EN ESTE PUNTO SE DEBE OBTENER LAS COORDENADAS DE LOS PUNTOS CERCANOS
 #        A LA DISTANCIA MÁS LEJANA
         
 #        depthToWorld( x , y , raw_depth[])
-        p1 = depthToWorld(320,240,raw_erosion[240,320]);
-        p2 = depthToWorld(20,240,raw_erosion[240,20]);
+        p1 = depthToWorld(arr_bw[0],240,raw_erosion[240,arr_bw[0]]);
+        p2 = depthToWorld(arr_bw[len(arr_bw)-1],240,raw_erosion[240,arr_bw[len(arr_bw)-1]]);
     
         result = np.subtract(p1,p2);
         norma= np.linalg.norm(result);
-#        print(norma+0.1);
+        
         """------------------- OBTENER COORDENADAS P1 P2-------------"""
         
-        print(distancias_maximas); 
+        img2=cv2.arrowedLine(img_c40, (arr_bw[0], 240), (arr_bw[len(arr_bw)-1], 240), (0,255,0), 2, cv2.LINE_4)
+        img3=cv2.arrowedLine(img2, (arr_bw[len(arr_bw)-1], 240), (arr_bw[0], 240), (0,255,0), 2, cv2.LINE_4)
+        
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        text="m = "+str(norma+0.1);
+        img4=cv2.putText(img3, text, (20, 30), font, 1, (0,255,0), 3, cv2.LINE_AA)
+        text2="Deviation angle = "+str(tetha2);
+        img5=cv2.putText(img4, text2, (20, 70), font, 1, (0,100,255), 3, cv2.LINE_AA)
         
         
+
+
+
+        #display depth image                
+        cv2.imshow('Depth image',thresholding)
         #display RGB image
-        cv2.imshow('RGB image',img_c40)
-        #display depth image
-        cv2.imshow('Depth image',raw_erosion)
+        cv2.imshow('RGB image',img5)
  
     
         vector=[];
         dis=[];
         maximo=0;
-        minimo=0;
-        maxi_dis=0;
-        distancias_maximas=[];
+       
+        arr_bw=[];
         
         # quit program when 'esc' key is pressed
         k = cv2.waitKey(5) & 0xFF
