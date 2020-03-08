@@ -1,2 +1,2 @@
 # Detph_Kinect
-Algoritmo para calcular distancias en base a los valores de profundidad de la Kinect V1.
+Algoritmo para trazar la trayectoria a seguir de un robot móvil diferencial en entornos interiores empleando la cámara kinect v1.

@@ -1,0 +1,8 @@
+Code block 'INIT VAR: ' took: 0.03409 ms
+Code block 'OBTENIENDO SEÑAL VIDEO: ' took: 47.80316 ms
+Code block 'APLICANDO FILTRO:' took: 4.56619 ms
+Code block 'ALMACENANDO PROFUNDIDAD: ' took: 0.10800 ms
+Code block 'CALCULANDO ANGULO DE GIRO: ' took: 0.02003 ms
+Code block 'CALCULANDO DISTANCIA LEJANA: ' took: 0.12112 ms
+Code block 'CALCULANDO ZONA SEGURA: ' took: 0.18096 ms
+Code block 'MOSTRANDO SEÑALES DE VIDEO: ' took: 3.79205 ms
